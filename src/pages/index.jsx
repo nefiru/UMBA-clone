@@ -7,6 +7,7 @@ import {
   usePrepareContractRead,
   useContractRead,
   useContractWrite,
+  useBalance,
 } from "wagmi";
 
 import PresaleAbi from "../abi/PresaleAbi.json";
@@ -16,13 +17,27 @@ export default function HomePage() {
   const { address } = useAccount();
   const { isConnected } = useAccount();
 
+  const balance = useBalance({
+    address: address,
+    token: "0x9125e2C2E77E5C8207fe5111bc84F32fc1246d2d", //token address UMBA
+  });
+
+  const balanceUmba = balance.data ? balance.data.formatted : null;
+  const balanceError = balance.error;
+
+  // Error handling
+  if (balanceError) {
+    console.error("Error fetching balance:", balanceError);
+  }
+
   // Contracts
   const [TokenUSDTAddress, setTokenUSDTAddress] = useState({
-    address: "0xDeC0238084f3BBA8DEb7819ae40c7Db470DEE944",
+    address: "0x5F84e945455bffC501ACB53894FB1400D4725e54", // USDT token address
     abi: USDTAbi,
   });
   const [TokenPresaleAddress, setTokenPresaleAddress] = useState({
-    address: "0x1c103ad0921c35abe1a5e396479922450D38Ad76",
+    //Presale contract address
+    address: "0xd7558a339BeDfaEeE67DB2C04E9f53989dDB69FC",
     abi: PresaleAbi,
   });
 
@@ -49,7 +64,7 @@ export default function HomePage() {
   const { config: ApproveUSDT } = usePrepareContractWrite({
     ...TokenUSDTAddress,
     functionName: "approve",
-    args: ["0x1c103ad0921c35abe1a5e396479922450D38Ad76", 1000000],
+    args: ["0xd7558a339BeDfaEeE67DB2C04E9f53989dDB69FC", 1000000], //presale address
   });
 
   const {
@@ -72,10 +87,21 @@ export default function HomePage() {
       <div className="Main">
         <div className="Navbara">
           <div className="NavbarLeft">
-            <p className="Title">TOKEN SALE USDT - RUB</p>
+            <h4 className="Title">TOKEN SALE USDT - UMBA</h4>
           </div>
           <div className="NavbarRight">
             <Web3Button balance="show" />
+            <div>
+              {isConnected ? (
+                <p>
+                  {balanceUmba
+                    ? `UMBA balance: ${balanceUmba}`
+                    : "Fetching balance..."}
+                </p>
+              ) : (
+                <p></p>
+              )}
+            </div>
           </div>
         </div>
 
@@ -85,8 +111,8 @@ export default function HomePage() {
               <div className="ContainerContent">
                 <h1 className="TokenTitlle">Token Sale </h1>
 
-                <p className="TokenRate">1 USDT = 81 RUB</p>
-
+                <p className="TokenRate">1 UMBA = 0.08 USDT </p>
+                <p></p>
                 <p className="AmountText">USDT Amount</p>
                 <input
                   className="input"
