@@ -19,7 +19,7 @@ export default function HomePage() {
 
   const balance = useBalance({
     address: address,
-    token: "0x9125e2C2E77E5C8207fe5111bc84F32fc1246d2d", //token address UMBA
+    token: process.env.NEXT_PUBLIC_UMBA_CONTRACT_ADDRESS, //token address UMBA
   });
 
   const balanceUmba = balance.data ? balance.data.formatted : null;
@@ -32,12 +32,12 @@ export default function HomePage() {
 
   // Contracts
   const [TokenUSDTAddress, setTokenUSDTAddress] = useState({
-    address: "0x5F84e945455bffC501ACB53894FB1400D4725e54", // USDT token address
+    address: process.env.NEXT_PUBLIC_USDT_CONTRACT_ADDRESS, // USDT token address
     abi: USDTAbi,
   });
   const [TokenPresaleAddress, setTokenPresaleAddress] = useState({
     //Presale contract address
-    address: "0xd7558a339BeDfaEeE67DB2C04E9f53989dDB69FC",
+    address: process.env.NEXT_PUBLIC_PRESALE_CONTRACT_ADDRESS,
     abi: PresaleAbi,
   });
 
@@ -64,7 +64,7 @@ export default function HomePage() {
   const { config: ApproveUSDT } = usePrepareContractWrite({
     ...TokenUSDTAddress,
     functionName: "approve",
-    args: ["0xd7558a339BeDfaEeE67DB2C04E9f53989dDB69FC", 1000000], //presale address
+    args: [process.env.NEXT_PUBLIC_PRESALE_CONTRACT_ADDRESS, 1000000], //presale address
   });
 
   const {
