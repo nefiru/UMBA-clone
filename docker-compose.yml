@@ -1,0 +1,18 @@
+version: '3'
+
+services:
+  next-app:
+    container_name: next-app
+    build:
+      context: ./
+      dockerfile: prod.Dockerfile
+      args:
+        NEXT_PUBLIC_PROJECT_ID: ${NEXT_PUBLIC_PROJECT_ID}
+        NEXT_PUBLIC_PRESALE_CONTRACT_ADDRESS: ${NEXT_PUBLIC_PRESALE_CONTRACT_ADDRESS}
+        NEXT_PUBLIC_USDT_CONTRACT_ADDRESS: ${NEXT_PUBLIC_USDT_CONTRACT_ADDRESS}
+        NEXT_PUBLIC_UMBA_CONTRACT_ADDRESS: ${NEXT_PUBLIC_UMBA_CONTRACT_ADDRESS}
+    env_file:
+      - .env
+    restart: always
+    ports:
+      - 3000:3000
