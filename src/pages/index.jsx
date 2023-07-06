@@ -1,164 +1,198 @@
-import { Web3Button, Web3NetworkSwitch } from "@web3modal/react";
-import { useState, useEffect } from "react";
+import { Web3Button } from "@web3modal/react";
+import { useState, useEffect, useMemo } from "react";
 import {
-  useDisconnect,
-  useAccount,
-  usePrepareContractWrite,
-  usePrepareContractRead,
-  useContractRead,
-  useContractWrite,
-  useBalance,
+    useAccount,
+    useContractWrite,
+    useBalance,
+    useWaitForTransaction,
 } from "wagmi";
 
-import PresaleAbi from "../abi/PresaleAbi.json";
-import USDTAbi from "../abi/USDTTokenAbi.json";
+import BigNumber from "bignumber.js";
+
+import { useUSDT } from "../hooks/useUSDT";
+import { usePresale } from "../hooks/usePresale";
+
+import { ConfirmAllowance } from "../components/ConfirmAllowance";
 
 export default function HomePage() {
-  const { address } = useAccount();
-  const { isConnected } = useAccount();
+    const { address, isConnected } = useAccount();
 
-  const balance = useBalance({
-    address: address,
-    token: process.env.NEXT_PUBLIC_UMBA_CONTRACT_ADDRESS, //token address UMBA
-  });
+    const { data: balanceData, refetch: refetchBalance } = useBalance({
+        address,
+        token: process.env.NEXT_PUBLIC_UMC_CONTRACT_ADDRESS, //token address UMC
+    });
+    const balanceUMC = balanceData?.formatted;
 
-  const balanceUmba = balance.data ? balance.data.formatted : null;
-  const balanceError = balance.error;
+    const TokenUSDTAddress = useUSDT();
+    const TokenPresaleAddress = usePresale();
 
-  // Error handling
-  if (balanceError) {
-    console.error("Error fetching balance:", balanceError);
-  }
+    // Inputs
+    const [USDTAmount, setUSDTAmount] = useState("100");
+    const [error, setError] = useState();
 
-  // Contracts
-  const [TokenUSDTAddress, setTokenUSDTAddress] = useState({
-    address: process.env.NEXT_PUBLIC_USDT_CONTRACT_ADDRESS, // USDT token address
-    abi: USDTAbi,
-  });
-  const [TokenPresaleAddress, setTokenPresaleAddress] = useState({
-    //Presale contract address
-    address: process.env.NEXT_PUBLIC_PRESALE_CONTRACT_ADDRESS,
-    abi: PresaleAbi,
-  });
+    const formattedAmount = useMemo(() => {
+        return parseFloat(USDTAmount.replace(/,/g, ""));
+    }, [USDTAmount]);
 
-  // Inputs
-  const [USDTAmount, setUSDTAmount] = useState("100");
-  const [error, setError] = useState("");
+    const weiAmount = useMemo(() => {
+        return formattedAmount.toFixed(6) * 10 ** 6;
+    }, [formattedAmount]);
 
-  // Selector Amount
-  useEffect(() => {
-    const value = parseFloat(USDTAmount.replace(/,/g, ""));
-    if (isNaN(value) || value < 100) {
-      setError("Min buy is 100 USDT");
-    } else {
-      setError("");
+    const totalUMC = useMemo(() => {
+        const total = new BigNumber(formattedAmount);
+        return total.multipliedBy(12.5).toString();
+    }, [formattedAmount]);
+
+    // Selector Amount
+    useEffect(() => {
+        if (isNaN(formattedAmount) || formattedAmount < 100) {
+            setError("Min buy is 100 USDT");
+        } else {
+            setError(null);
+        }
+    }, [formattedAmount]);
+
+    function handleChangeUSDTAmount(event) {
+        let inputValue = event.target.value.replace(/[^0-9.,]/g, "");
+
+        const pointsLength = inputValue.match(/\./g)?.length || 0;
+        if (pointsLength > 1) {
+            return;
+        }
+
+        const floatLength = inputValue.match(/\.(\d+)/)?.[1].length || 0;
+        if (floatLength > 2) {
+            inputValue = Number(inputValue).toFixed(2);
+        }
+
+        setUSDTAmount(inputValue);
     }
-  }, [USDTAmount]);
 
-  function handleChangeUSDTAmount(event) {
-    const inputValue = event.target.value.replace(/[^0-9.,]/g, "");
-    setUSDTAmount(inputValue);
-  }
+    const errorHandling = {
+        onSettled: (data, error) => {
+            if (error == null) {
+                setError(null);
+            }
+        },
+        onError: (error) => {
+            setError(error.cause.message);
+        }
+    };
 
-  // Aprove USDT
-  const { config: ApproveUSDT } = usePrepareContractWrite({
-    ...TokenUSDTAddress,
-    functionName: "approve",
-    args: [process.env.NEXT_PUBLIC_PRESALE_CONTRACT_ADDRESS, 1000000], //presale address
-  });
+    const {
+        write: approveTransfer,
+        isLoading: isApproveLoading,
+        data: approveData,
+    } = useContractWrite({
+        ...TokenUSDTAddress,
+        functionName: "approve",
+        args: [TokenPresaleAddress.address, weiAmount],
+        ...errorHandling
+    });
 
-  const {
-    write: Approve,
-    isLoading,
-    isSuccess,
-  } = useContractWrite(ApproveUSDT);
+    const {
+        write: buyTokens,
+        data: buyData,
+    } = useContractWrite({
+        ...TokenPresaleAddress,
+        functionName: "buyTokens",
+        args: [weiAmount],
+        ...errorHandling
+    });
 
-  // Buy token
-  const USDTend = USDTAmount.toString();
+    const { isLoading: isApproveTransactionLoading } = useWaitForTransaction({
+        hash: approveData?.hash,
+        onSuccess: () => {
+            buyTokens();
+        },
+        ...errorHandling
+    });
 
-  const { data, write } = useContractWrite({
-    ...TokenPresaleAddress,
-    functionName: "buyTokens",
-    args: [USDTend],
-  });
+    const { isLoading: isBuyTransactionLoading } = useWaitForTransaction({
+        hash: buyData?.hash,
+        onSuccess: () => {
+            void refetchBalance();
+        },
+        ...errorHandling
+    });
 
-  return (
-    <>
-      <div className="Main">
-        <div className="Navbara">
-          <div className="NavbarLeft">
-            <h4 className="Title">TOKEN SALE USDT - UMBA</h4>
-          </div>
-          <div className="NavbarRight">
-            <Web3Button balance="show" />
-            <div>
-              {isConnected ? (
-                <p>
-                  {balanceUmba
-                    ? `UMBA balance: ${balanceUmba}`
-                    : "Fetching balance..."}
-                </p>
-              ) : (
-                <p></p>
-              )}
+    const totalTokensP = <p key="total-tokens-p">You will get {totalUMC} UMC</p>;
+
+    return (
+        <>
+            <div className="Main">
+                <div className="Navbara">
+                    <div className="NavbarLeft">
+                        <h4 className="Title">TOKEN SALE USDT - UMC</h4>
+                    </div>
+                    <div className="NavbarRight">
+                        <Web3Button balance="show"/>
+                        <div>
+                            {isConnected && (
+                                <p>
+                                    {balanceUMC
+                                        ? `UMC balance: ${balanceUMC}`
+                                        : "Fetching balance..."}
+                                </p>
+                            )}
+                        </div>
+                    </div>
+                </div>
+
+                <div className="container">
+                    <div className="column2">
+                        <div className="TokenContainer">
+                            <div className="ContainerContent">
+                                <h1 className="TokenTitlle">Token Sale</h1>
+
+                                <p className="TokenRate">1 UMC = 0.08 USDT</p>
+
+
+                                {isConnected && !(isApproveTransactionLoading || isBuyTransactionLoading) && (
+                                    <>
+                                        <ConfirmAllowance buyTokens={buyTokens} />
+
+                                        <p className="AmountText">USDT Amount</p>
+                                        <input
+                                            className="input"
+                                            type="text"
+                                            id="total-price-input"
+                                            disabled={isApproveLoading}
+                                            value={USDTAmount}
+                                            onChange={handleChangeUSDTAmount}
+                                        />
+                                        {totalTokensP}
+                                        <button
+                                            onClick={() => approveTransfer()}
+                                            className="BuyButton"
+                                            disabled={error != null || isApproveLoading}
+                                        >
+                                            Approve USDT
+                                        </button>
+                                    </>
+                                )}
+                                {(isApproveTransactionLoading || isBuyTransactionLoading) && (
+                                    <>
+                                        <p>Please wait for transaction approval...</p>
+                                        {isApproveTransactionLoading && (
+                                            <p>After approval, please, confirm transaction for getting tokens.</p>
+                                        )}
+                                        {totalTokensP}
+                                    </>
+                                )}
+
+                                {error != null && <p className="TokenError" key="error-tokens-p">{error}</p>}
+
+                                {!isConnected && (
+                                    <button disabled className="BuyButton">
+                                        Please Connect Wallet
+                                    </button>
+                                )}
+                            </div>
+                        </div>
+                    </div>
+                </div>
             </div>
-          </div>
-        </div>
-
-        <div className="container">
-          <div className="column2">
-            <div className="TokenContainer">
-              <div className="ContainerContent">
-                <h1 className="TokenTitlle">Token Sale </h1>
-
-                <p className="TokenRate">1 UMBA = 0.08 USDT </p>
-                <p></p>
-                <p className="AmountText">USDT Amount</p>
-                <input
-                  className="input"
-                  type="text"
-                  id="total-price-input"
-                  value={USDTAmount}
-                  onChange={handleChangeUSDTAmount}
-                />
-                {error && <p className="TokenError">{error}</p>}
-
-                {isConnected ? (
-                  <>
-                    {isSuccess ? (
-                      <>
-                        <button
-                          disabled={!isConnected}
-                          onClick={() => write()}
-                          className="BuyButton"
-                        >
-                          Buy Token
-                        </button>
-                      </>
-                    ) : (
-                      <>
-                        <button
-                          onClick={() => Approve?.()}
-                          className="BuyButton"
-                        >
-                          Aprrove USDT
-                        </button>
-                      </>
-                    )}
-                  </>
-                ) : (
-                  <>
-                    <button disabled={!isConnected} className="BuyButton">
-                      {" "}
-                      Please Connect Wallet{" "}
-                    </button>
-                  </>
-                )}
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </>
-  );
+        </>
+    );
 }
