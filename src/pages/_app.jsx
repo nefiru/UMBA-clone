@@ -6,11 +6,7 @@ import {
 import { Web3Modal } from "@web3modal/react";
 import { useEffect, useState } from "react";
 import { configureChains, createConfig, WagmiConfig } from "wagmi";
-import {
-    bscTestnet,
-    sepolia,
-    goerli
-} from "wagmi/chains";
+import { mainnet } from "wagmi/chains";
 
 import "../styles.css";
 
@@ -21,7 +17,7 @@ if (!process.env.NEXT_PUBLIC_PROJECT_ID) {
 }
 
 const projectId = process.env.NEXT_PUBLIC_PROJECT_ID;
-const chains = [goerli];
+const chains = [mainnet];
 
 const { publicClient, webSocketPublicClient } = configureChains(chains, [w3mProvider({ projectId })]);
 const wagmiConfig = createConfig({
@@ -51,7 +47,7 @@ export default function App({ Component, pageProps }) {
             )}
 
             <Web3Modal
-                defaultChain={goerli}
+                defaultChain={mainnet}
                 themeMode="dark"
                 themeVariables={{
                     '--w3m-background-color': '#01A8C3',
