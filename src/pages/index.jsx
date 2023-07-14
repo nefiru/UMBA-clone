@@ -27,7 +27,7 @@ export default function HomePage() {
     const TokenPresaleAddress = usePresale();
 
     // Inputs
-    const [USDTAmount, setUSDTAmount] = useState("100");
+    const [USDTAmount, setUSDTAmount] = useState("1");
     const [error, setError] = useState();
 
     const formattedAmount = useMemo(() => {
@@ -39,14 +39,14 @@ export default function HomePage() {
     }, [formattedAmount]);
 
     const totalUMC = useMemo(() => {
-        const total = new BigNumber(formattedAmount);
-        return total.multipliedBy(12.5).toString();
+        const total = new BigNumber(formattedAmount).multipliedBy(12.5);
+        return total.gt(0) ? total.toString() : 0;
     }, [formattedAmount]);
 
     // Selector Amount
     useEffect(() => {
-        if (isNaN(formattedAmount) || formattedAmount < 100) {
-            setError("Min buy is 100 USDT");
+        if (isNaN(formattedAmount) || formattedAmount < 1) {
+            setError("Min buy is 1 USDT");
         } else {
             setError(null);
         }
