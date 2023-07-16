@@ -8,7 +8,7 @@ import { useEffect, useState } from "react";
 import { configureChains, createConfig, WagmiConfig } from "wagmi";
 import { mainnet, goerli } from "wagmi/chains";
 
-import "../styles.css";
+import "../styles.scss";
 
 
 // 1. Get projectID at https://cloud.walletconnect.com
