@@ -109,10 +109,12 @@ export default function HomePage() {
         ...errorHandling
     });
 
+    const isBuySending = isBuyTransactionLoading || isBuyLoading;
+
     const { isLoading: isApproveTransactionLoading } = useWaitForTransaction({
         hash: approveData?.hash,
         onSuccess: () => {
-            if (!isBuyTransactionLoading && !isBuyLoading) {
+            if (!isBuySending) {
                 buyTokens();
             }
         },
@@ -154,7 +156,7 @@ export default function HomePage() {
 
                                 {isConnected && !(isApproveTransactionLoading || isBuyTransactionLoading) && (
                                     <>
-                                        <ConfirmAllowance buyTokens={buyTokens} />
+                                        <ConfirmAllowance buyTokens={buyTokens} disabled={isBuySending} />
 
                                         <p className="AmountText">USDT Amount</p>
                                         <input

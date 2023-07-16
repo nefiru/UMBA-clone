@@ -5,7 +5,7 @@ import BigNumber from "bignumber.js";
 import { useUSDT } from "../hooks/useUSDT";
 import { usePresale } from "../hooks/usePresale";
 
-export function ConfirmAllowance({ buyTokens }) {
+export function ConfirmAllowance({ buyTokens, disabled }) {
     const { address, isConnected } = useAccount();
     const TokenUSDTAddress = useUSDT();
     const PresaleAddress = usePresale();
@@ -42,6 +42,7 @@ export function ConfirmAllowance({ buyTokens }) {
                                 args: [data.toString()]
                             })
                         }}
+                        disabled={disabled}
                         className="BuyButton"
                     >
                         Buy Token
