@@ -93,18 +93,11 @@ export default function HomePage() {
     const {
         write: buyTokens,
         data: buyData,
+        isLoading: isBuyLoading
     } = useContractWrite({
         ...TokenPresaleAddress,
         functionName: "buyTokens",
         args: [weiAmount],
-        ...errorHandling
-    });
-
-    const { isLoading: isApproveTransactionLoading } = useWaitForTransaction({
-        hash: approveData?.hash,
-        onSuccess: () => {
-            buyTokens();
-        },
         ...errorHandling
     });
 
@@ -115,6 +108,17 @@ export default function HomePage() {
         },
         ...errorHandling
     });
+
+    const { isLoading: isApproveTransactionLoading } = useWaitForTransaction({
+        hash: approveData?.hash,
+        onSuccess: () => {
+            if (!isBuyTransactionLoading && !isBuyLoading) {
+                buyTokens();
+            }
+        },
+        ...errorHandling
+    });
+
 
     const totalTokensP = <p key="total-tokens-p">You will get {totalUMC} UMC</p>;
 

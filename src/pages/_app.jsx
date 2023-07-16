@@ -6,7 +6,7 @@ import {
 import { Web3Modal } from "@web3modal/react";
 import { useEffect, useState } from "react";
 import { configureChains, createConfig, WagmiConfig } from "wagmi";
-import { mainnet } from "wagmi/chains";
+import { mainnet, goerli } from "wagmi/chains";
 
 import "../styles.css";
 

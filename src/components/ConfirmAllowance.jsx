@@ -5,7 +5,7 @@ import BigNumber from "bignumber.js";
 import { useUSDT } from "../hooks/useUSDT";
 import { usePresale } from "../hooks/usePresale";
 
-export function ConfirmAllowance({ buyTokens}) {
+export function ConfirmAllowance({ buyTokens }) {
     const { address, isConnected } = useAccount();
     const TokenUSDTAddress = useUSDT();
     const PresaleAddress = usePresale();

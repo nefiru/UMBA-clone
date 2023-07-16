@@ -2,6 +2,9 @@ body {
   background: rgb(5, 4, 10);
   background-image: url(../public/bg.png);
   background-size: cover;
+  -webkit-background-size: cover;
+  -moz-background-size: cover;
+  -o-background-size: cover;
   color: white;
   filter: progid:DXImageTransform.Microsoft.gradient(startColorstr="#080513",endColorstr="#1d1229",GradientType=1);
   font-family: "Poppins", sans-serif;
