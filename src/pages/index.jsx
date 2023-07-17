@@ -5,6 +5,7 @@ import {
     useContractWrite,
     useBalance,
     useWaitForTransaction,
+    useContractRead,
 } from "wagmi";
 
 import BigNumber from "bignumber.js";
@@ -17,14 +18,28 @@ import { ConfirmAllowance } from "../components/ConfirmAllowance";
 export default function HomePage() {
     const { address, isConnected } = useAccount();
 
+    const TokenUSDTAddress = useUSDT();
+    const TokenPresaleAddress = usePresale();
+
     const { data: balanceData, refetch: refetchBalance } = useBalance({
         address,
         token: process.env.NEXT_PUBLIC_UMC_CONTRACT_ADDRESS, //token address UMC
     });
     const balanceUMC = balanceData?.formatted;
 
-    const TokenUSDTAddress = useUSDT();
-    const TokenPresaleAddress = usePresale();
+    const { data: tokenWeiPrice } = useContractRead({
+        ...TokenPresaleAddress,
+        functionName: "tokenPerUSDT",
+    });
+
+    const tokenPrice = useMemo(() => {
+        // tokenPerUSDT * usdt decimal(6) / token decimal(18) * 100
+        return tokenWeiPrice != null ?
+            new BigNumber(tokenWeiPrice)
+                .dividedBy(10 ** 14)
+                .toString()
+            : 0.1;
+    }, [tokenWeiPrice]);
 
     // Inputs
     const [USDTAmount, setUSDTAmount] = useState("1");
@@ -35,13 +50,13 @@ export default function HomePage() {
     }, [USDTAmount]);
 
     const weiAmount = useMemo(() => {
-        return formattedAmount.toFixed(6) * 10 ** 6;
+        return new BigNumber(formattedAmount).multipliedBy(10 ** 6).toString();
     }, [formattedAmount]);
 
     const totalUMC = useMemo(() => {
-        const total = new BigNumber(formattedAmount).multipliedBy(12.5);
+        const total = new BigNumber(formattedAmount).dividedBy(tokenPrice);
         return total.gt(0) ? total.toString() : 0;
-    }, [formattedAmount]);
+    }, [formattedAmount, tokenPrice]);
 
     // Selector Amount
     useEffect(() => {
@@ -149,14 +164,14 @@ export default function HomePage() {
                     <div className="column2">
                         <div className="TokenContainer">
                             <div className="ContainerContent">
-                                <h1 className="TokenTitlle">Token Sale</h1>
+                                <h1 className="TokenTitlle">Token Price</h1>
 
-                                <p className="TokenRate">1 UMC = 0.08 USDT</p>
+                                <p className="TokenRate">1 UMC = {tokenPrice} USDT</p>
 
 
                                 {isConnected && !(isApproveTransactionLoading || isBuyTransactionLoading) && (
                                     <>
-                                        <ConfirmAllowance buyTokens={buyTokens} disabled={isBuySending} />
+                                        <ConfirmAllowance buyTokens={buyTokens} disabled={isBuySending} tokenPrice={tokenPrice} />
 
                                         <p className="AmountText">USDT Amount</p>
                                         <input

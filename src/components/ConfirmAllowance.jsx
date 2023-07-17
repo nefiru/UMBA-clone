@@ -5,7 +5,7 @@ import BigNumber from "bignumber.js";
 import { useUSDT } from "../hooks/useUSDT";
 import { usePresale } from "../hooks/usePresale";
 
-export function ConfirmAllowance({ buyTokens, disabled }) {
+export function ConfirmAllowance({ buyTokens, disabled, tokenPrice }) {
     const { address, isConnected } = useAccount();
     const TokenUSDTAddress = useUSDT();
     const PresaleAddress = usePresale();
@@ -26,8 +26,8 @@ export function ConfirmAllowance({ buyTokens, disabled }) {
     }, [wei]);
 
     const UMC = useMemo(() => {
-        return wei.dividedBy(10 ** 6).multipliedBy(12.5).toString();
-    }, [wei]);
+        return wei.dividedBy(10 ** 6).dividedBy(tokenPrice).toString();
+    }, [wei, tokenPrice]);
 
     return (
         <>
