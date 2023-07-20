@@ -34,7 +34,7 @@ export default function HomePage() {
 
     const tokenPrice = useMemo(() => {
         if (tokenWeiPrice == null) {
-            return 0;
+            return 0.1;
         } else {
             const tokenPerUSDT = new BigNumber(tokenWeiPrice).dividedBy(10 ** 12);
             return new BigNumber(1).dividedBy(tokenPerUSDT.toString()).toString();
@@ -55,7 +55,7 @@ export default function HomePage() {
 
     const totalUMC = useMemo(() => {
         const total = new BigNumber(formattedAmount).dividedBy(tokenPrice);
-        return total.gt(0) ? total.toString() : 0;
+        return total.gt(0) ? total.toFixed(2).toString() : 0;
     }, [formattedAmount, tokenPrice]);
 
     // Selector Amount

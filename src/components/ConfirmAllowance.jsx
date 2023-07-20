@@ -26,7 +26,7 @@ export function ConfirmAllowance({ buyTokens, disabled, tokenPrice }) {
     }, [wei]);
 
     const UMC = useMemo(() => {
-        return wei.dividedBy(10 ** 6).dividedBy(tokenPrice).toFixed(6).toString();
+        return wei.dividedBy(10 ** 6).dividedBy(tokenPrice).toFixed(2).toString();
     }, [wei, tokenPrice]);
 
     return (
