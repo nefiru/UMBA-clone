@@ -33,12 +33,12 @@ export default function HomePage() {
     });
 
     const tokenPrice = useMemo(() => {
-        // tokenPerUSDT * usdt decimal(6) / token decimal(18) * 100
-        return tokenWeiPrice != null ?
-            new BigNumber(tokenWeiPrice)
-                .dividedBy(10 ** 14)
-                .toString()
-            : 0.1;
+        if (tokenWeiPrice == null) {
+            return 0;
+        } else {
+            const tokenPerUSDT = new BigNumber(tokenWeiPrice).dividedBy(10 ** 12);
+            return new BigNumber(1).dividedBy(tokenPerUSDT.toString()).toString();
+        }
     }, [tokenWeiPrice]);
 
     // Inputs
